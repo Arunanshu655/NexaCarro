@@ -1,65 +1,50 @@
-import { MessageCircle, User } from "lucide-react";
+import {
+  MessageCircle,
+} from "lucide-react";
 
 const ChatSidebar = ({
   chats,
   currentUser,
+  selectedChatId,
+  onSelectChat,
 }) => {
-
   return (
-    <aside className="
-      border-b
-      border-[var(--border)]
-      bg-[#FAFAFA]
-      lg:border-b-0
-      lg:border-r
-    ">
+    <aside className="flex flex-col border-r border-gray-200 bg-white">
 
       {/* Header */}
-      <div className="
-        border-b
-        border-[var(--border)]
-        px-5 py-4
-      ">
-
-        <h2 className="font-semibold">
+      <div className="px-5 py-4 border-b border-gray-200">
+        <h2 className="font-semibold text-gray-900">
           Conversations
         </h2>
 
-        <p className="mt-1 text-xs text-[var(--muted)]">
-          {chats.length} conversation
-          {chats.length !== 1 ? "s" : ""}
+        <p className="text-sm text-gray-500 mt-1">
+          {chats.length} conversation{chats.length !== 1 ? "s" : ""}
         </p>
-
       </div>
 
-      {/* Chats */}
-      <div className="
-        max-h-[250px]
-        overflow-y-auto
-        lg:max-h-[590px]
-      ">
+      {/* Chat List */}
+      <div className="flex-1 overflow-y-auto">
 
         {chats.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full px-6 text-center">
 
-          <div className="px-5 py-12 text-center">
+            <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+              <MessageCircle
+                size={22}
+                className="text-gray-500"
+              />
+            </div>
 
-            <MessageCircle
-              size={32}
-              className="mx-auto text-gray-300"
-            />
-
-            <p className="mt-3 text-sm font-medium">
+            <p className="font-medium text-gray-900 mt-3">
               No conversations
             </p>
 
-            <p className="mt-1 text-xs text-[var(--muted)]">
-              Start a chat with a seller.
+            <p className="text-sm text-gray-500 mt-1">
+              Start a conversation to see it here.
             </p>
 
           </div>
-
         ) : (
-
           chats.map((chat) => {
 
             const otherUser = chat.users?.find(
@@ -69,74 +54,75 @@ const ChatSidebar = ({
             const lastMessage =
               chat.messages?.[chat.messages.length - 1];
 
+            const isSelected =
+              selectedChatId === chat.id;
+
             return (
               <button
                 key={chat.id}
-                className="
-                  flex w-full
-                  items-center gap-3
-                  border-b border-[var(--border)]
-                  px-5 py-4
+                onClick={() => onSelectChat(chat.id)}
+                className={`
+                  w-full
                   text-left
-                  transition-colors duration-200
-                  hover:bg-white
-                "
+                  px-5
+                  py-4
+                  border-b
+                  border-gray-100
+                  transition-colors
+                  duration-150
+                  ${
+                    isSelected
+                      ? "bg-gray-100"
+                      : "hover:bg-gray-50"
+                  }
+                `}
               >
 
-                {/* Avatar */}
-                <div className="
-                  relative
-                  flex h-11 w-11
-                  shrink-0
-                  items-center justify-center
-                  rounded-full
-                  bg-[var(--primary)]
-                  text-white
-                ">
-                  <User size={19} />
+                <div className="flex items-center gap-3">
 
-                  <span className="
-                    absolute
-                    bottom-0
-                    right-0
-                    h-3
-                    w-3
-                    rounded-full
-                    border-2
-                    border-white
-                    bg-[var(--success)]"
-                  />
-                </div>
-                {/* info */}
-                <div className=" min-w-0 flex-1 ">
+                  {/* Avatar */}
+                  <div
+                    className="
+                      w-11
+                      h-11
+                      shrink-0
+                      rounded-full
+                      bg-gray-900
+                      text-white
+                      flex
+                      items-center
+                      justify-center
+                      font-semibold
+                    "
+                  >
+                    {otherUser?.name?.charAt(0)?.toUpperCase() || "U"}
+                  </div>
 
-                  <div className="flex items-center justify-between gap-2">
+                  {/* Information */}
+                  <div className="min-w-0 flex-1">
 
-                    <p className="truncate text-sm font-semibold">
-                      {otherUser?.name || "User"}
+                    <div className="flex items-center justify-between gap-2">
+
+                      <p className="font-medium text-gray-900 truncate">
+                        {otherUser?.name || "Unknown User"}
+                      </p>
+
+                    </div>
+
+                    <p className="text-sm text-gray-500 truncate mt-1">
+                      {lastMessage?.text || "No messages yet"}
                     </p>
 
                   </div>
-
-                  <p className="
-                    mt-1
-                    truncate
-                    text-xs
-                    text-[var(--muted)]
-                  ">
-                    {lastMessage?.text || "No messages yet"}
-                  </p>
 
                 </div>
 
               </button>
             );
           })
-
         )}
 
       </div>
-
     </aside>
   );
 };
