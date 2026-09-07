@@ -1,21 +1,17 @@
 import { useState } from "react";
 import { Send } from "lucide-react";
 
-const MessageInput = ({
-  onSend,
-  disabled = false,
-}) => {
-
+const MessageInput = ({ onSend, disabled = false }) => {
   const [text, setText] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const message = text.trim();
+    const trimmedText = text.trim();
 
-    if (!message || disabled) return;
+    if (!trimmedText || disabled) return;
 
-    onSend(message);
+    onSend(trimmedText);
 
     setText("");
   };
@@ -23,14 +19,8 @@ const MessageInput = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="
-        flex items-center gap-3
-        border-t border-[var(--border)]
-        bg-white
-        p-4
-      "
+      className="flex items-center gap-3 p-4 bg-white border-t border-gray-200"
     >
-
       <input
         type="text"
         value={text}
@@ -39,16 +29,18 @@ const MessageInput = ({
         disabled={disabled}
         className="
           flex-1
+          px-4
+          py-3
           rounded-full
-          border border-[var(--border)]
-          bg-[var(--background)]
-          px-5 py-3
+          border
+          border-gray-200
+          bg-gray-50
           text-sm
+          text-gray-900
           outline-none
-          transition-all duration-200
-          focus:border-[var(--primary)]
-          focus:ring-2
-          focus:ring-blue-100
+          focus:border-gray-400
+          focus:bg-white
+          transition
           disabled:opacity-50
         "
       />
@@ -57,21 +49,24 @@ const MessageInput = ({
         type="submit"
         disabled={!text.trim() || disabled}
         className="
-          flex h-11 w-11
+          w-11
+          h-11
           shrink-0
-          items-center justify-center
           rounded-full
-          bg-[var(--primary)]
+          bg-gray-900
           text-white
-          transition-all duration-200
-          hover:bg-[var(--primary-hover)]
-          disabled:cursor-not-allowed
+          flex
+          items-center
+          justify-center
+          transition-all
+          duration-150
+          hover:bg-gray-800
           disabled:opacity-40
+          disabled:cursor-not-allowed
         "
       >
         <Send size={18} />
       </button>
-
     </form>
   );
 };
