@@ -43,11 +43,11 @@ io.on("connection",(socket)=>{
 
    // receive message from frontend
   socket.on("send_message", (data) => {
-
-    console.log("message received:", data);
-
-    // send to everyone in room except sender
-    socket.to(data.chatId).emit("receive_message", data);
+      // console.log(data)
+      io.to(data.chatId).emit("receive_message", {
+      chatId: data.chatId,
+      message: data.message,
+    });
   });
   socket.on("disconnect",()=>{
     console.log("disconnected user : ",socket.id)
