@@ -17,8 +17,6 @@ mutation SendMessage($chatId: ID!, $text: String!) {
 
     createdAt
 
-    chatId
-
   }
 
 }
