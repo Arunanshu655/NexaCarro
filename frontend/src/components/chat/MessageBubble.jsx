@@ -53,7 +53,7 @@ const MessageBubble = ({
               }
             `}
           >
-            {new Date(message.createdAt).toLocaleTimeString(
+            {new Date(Number(message.createdAt)).toLocaleTimeString(
               [],
               {
                 hour: "2-digit",
