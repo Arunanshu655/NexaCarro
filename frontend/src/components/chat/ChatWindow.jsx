@@ -1,20 +1,25 @@
-import { useEffect } from "react";
-import { useQuery } from "@apollo/client/react";
+import { useEffect, useRef } from "react";
+import { useMutation, useQuery } from "@apollo/client/react";
 import { MessageCircle } from "lucide-react";
+import {useAuth} from '../../context/AuthContext'
 
 import { GET_CHAT } from "../../graphql/queries/chatQueries";
+import { SEND_MESSAGE } from "../../graphql/mutations/chatMutations";
+
 import socket from "../../socket/socket";
 
 import MessageBubble from "./MessageBubble";
 import MessageInput from "./MessageInput";
-import Skeleton from "../ui/Skeleton";
 
 const ChatWindow = ({ chatId, currentUser }) => {
+  const messagesEndRef = useRef(null);
+  const {user} = useAuth();
 
   const {
     data,
     loading,
     error,
+    refetch,
   } = useQuery(GET_CHAT, {
     variables: {
       chatId,
@@ -22,31 +27,130 @@ const ChatWindow = ({ chatId, currentUser }) => {
     skip: !chatId,
   });
 
+  const [sendMessage, { loading: sending }] = useMutation(
+    SEND_MESSAGE
+  );
+
   const chat = data?.chat;
 
+  // if(chat) console.log(chat.messages[0].sender.id +" "+ user.id)
+  // if(chat) console.log(chat.messages[0].createdAt)
+  
   /*
-   * Join Socket.IO room whenever
-   * the selected chat changes.
+   * Scroll to newest message
+   */
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  };
+
+  /*
+   * Join / leave Socket.IO room
    */
   useEffect(() => {
-
     if (!chatId) return;
-    try {
-        socket.emit("join_chat", chatId);
-    } catch (error) {
-        console.log(error)
-    }
-    
+
+    socket.emit("join_chat", chatId);
 
     return () => {
-      // Leave room when changing conversation
       socket.emit("leave_chat", chatId);
     };
-
   }, [chatId]);
 
   /*
-   * No chat selected
+   * Receive realtime messages
+   */
+  useEffect(() => {
+    if (!chatId) return;
+
+    const handleReceiveMessage = (message) => {
+      console.log("Realtime message received:", message);
+
+      /*
+       * Only process messages belonging
+       * to the currently selected chat.
+       */
+      if (message.chatId !== chatId) return;
+
+      /*
+       * Refresh the current chat.
+       *
+       * This gives us the complete GraphQL
+       * message object including sender,
+       * createdAt, etc.
+       */
+      refetch();
+    };
+
+    socket.on(
+      "receive_message",
+      handleReceiveMessage
+    );
+
+    return () => {
+      socket.off(
+        "receive_message",
+        handleReceiveMessage
+      );
+    };
+  }, [chatId, refetch]);
+
+  /*
+   * Scroll whenever messages change
+   */
+  useEffect(() => {
+    if (chat?.messages?.length) {
+      scrollToBottom();
+    }
+  }, [chat?.messages]);
+
+  /*
+   * Send message
+   */
+  const handleSendMessage = async (text) => {
+    if (!chatId || !text.trim()) return;
+
+    try {
+      /*
+       * Save message through GraphQL
+       */
+      console.log("send : "+ text.trim())
+      const { data } = await sendMessage({
+        variables: {
+          chatId,
+          text: text.trim(),
+        },
+      });
+
+      /*
+       * Get the newly-created message
+       */
+      const messages =
+        data?.sendMessage?.messages || [];
+
+      const newMessage =
+        messages[messages.length - 1];
+
+      /*
+       * Tell Socket.IO that a new message
+       * was created.
+       */
+      socket.emit("send_message", {
+        chatId,
+        message: newMessage,
+      });
+
+    } catch (err) {
+      console.error(
+        "Failed to send message:",
+        err
+      );
+    }
+  };
+
+  /*
+   * No conversation selected
    */
   if (!chatId) {
     return (
@@ -72,14 +176,14 @@ const ChatWindow = ({ chatId, currentUser }) => {
   }
 
   /*
-   * Loading messages
+   * Loading
    */
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-gray-500">
+        <p className="text-sm text-gray-500">
           Loading conversation...
-        </div>
+        </p>
       </div>
     );
   }
@@ -110,7 +214,7 @@ const ChatWindow = ({ chatId, currentUser }) => {
   return (
     <section className="flex flex-col h-full bg-gray-50">
 
-      {/* Chat Header */}
+      {/* Header */}
       <div className="flex items-center gap-3 px-5 py-4 bg-white border-b border-gray-200">
 
         <div
@@ -134,7 +238,7 @@ const ChatWindow = ({ chatId, currentUser }) => {
             {otherUser?.name || "Unknown User"}
           </h2>
 
-          <div className="flex items-center gap-1.5 mt-0.5">
+          <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-green-500" />
 
             <span className="text-xs text-gray-500">
@@ -177,8 +281,12 @@ const ChatWindow = ({ chatId, currentUser }) => {
                 key={message.id}
                 message={message}
                 currentUser={currentUser}
+                isOwn={message.sender.id===user.id}
+
               />
             ))}
+
+            <div ref={messagesEndRef} />
 
           </div>
         )}
@@ -187,9 +295,8 @@ const ChatWindow = ({ chatId, currentUser }) => {
 
       {/* Input */}
       <MessageInput
-        onSend={(message) => {
-          console.log("Send:", message);
-        }}
+        onSend={handleSendMessage}
+        disabled={sending}
       />
 
     </section>
