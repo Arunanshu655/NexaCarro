@@ -1,25 +1,32 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { MessageCircle } from "lucide-react";
-import {useAuth} from '../../context/AuthContext'
+import { useAuth } from "../../context/AuthContext";
 
 import { GET_CHAT } from "../../graphql/queries/chatQueries";
 import { SEND_MESSAGE } from "../../graphql/mutations/chatMutations";
 
 import socket from "../../socket/socket";
-
 import MessageBubble from "./MessageBubble";
 import MessageInput from "./MessageInput";
 
 const ChatWindow = ({ chatId, currentUser }) => {
   const messagesEndRef = useRef(null);
-  const {user} = useAuth();
+
+  const { user } = useAuth();
+
+  /*
+   * Local messages state
+   *
+   * GraphQL loads the initial messages.
+   * Socket.IO will update this state in realtime.
+   */
+  const [messages, setMessages] = useState([]);
 
   const {
     data,
     loading,
     error,
-    refetch,
   } = useQuery(GET_CHAT, {
     variables: {
       chatId,
@@ -33,9 +40,19 @@ const ChatWindow = ({ chatId, currentUser }) => {
 
   const chat = data?.chat;
 
-  // if(chat) console.log(chat.messages[0].sender.id +" "+ user.id)
-  // if(chat) console.log(chat.messages[0].createdAt)
-  
+  /*
+   * Whenever a different chat is selected,
+   * load its messages into local state.
+   */
+  useEffect(() => {
+    if (!chat) {
+      setMessages([]);
+      return;
+    }
+
+    setMessages(chat.messages || []);
+  }, [chat]);
+
   /*
    * Scroll to newest message
    */
@@ -64,23 +81,42 @@ const ChatWindow = ({ chatId, currentUser }) => {
   useEffect(() => {
     if (!chatId) return;
 
-    const handleReceiveMessage = (message) => {
-      console.log("Realtime message received:", message);
+    const handleReceiveMessage = (data) => {
+      console.log("Realtime message received:", data);
 
       /*
-       * Only process messages belonging
-       * to the currently selected chat.
+       * Ignore messages belonging to another chat.
        */
-      if (message.chatId !== chatId) return;
+      if (data.chatId !== chatId) {
+        return;
+      }
+
+      const incomingMessage = data.message;
+
+      if (!incomingMessage) {
+        return;
+      }
 
       /*
-       * Refresh the current chat.
+       * Add the message to local state.
        *
-       * This gives us the complete GraphQL
-       * message object including sender,
-       * createdAt, etc.
+       * Before adding it, check whether it already exists.
        */
-      refetch();
+      setMessages((currentMessages) => {
+        const alreadyExists = currentMessages.some(
+          (message) => String(message.id) === String(incomingMessage.id)
+        );
+
+        if (alreadyExists) {
+          console.log("Duplicate message ignored");
+          return currentMessages;
+        }
+
+        return [
+          ...currentMessages,
+          incomingMessage,
+        ];
+      });
     };
 
     socket.on(
@@ -88,34 +124,44 @@ const ChatWindow = ({ chatId, currentUser }) => {
       handleReceiveMessage
     );
 
+    /*
+     * VERY IMPORTANT:
+     * Remove this listener when the chat changes
+     * or component unmounts.
+     */
     return () => {
       socket.off(
         "receive_message",
         handleReceiveMessage
       );
     };
-  }, [chatId, refetch]);
+  }, [chatId]);
 
   /*
-   * Scroll whenever messages change
+   * Scroll whenever messages change.
    */
   useEffect(() => {
-    if (chat?.messages?.length) {
+    if (messages.length > 0) {
       scrollToBottom();
     }
-  }, [chat?.messages]);
+  }, [messages]);
 
   /*
    * Send message
    */
   const handleSendMessage = async (text) => {
-    if (!chatId || !text.trim()) return;
+    if (!chatId || !text.trim()) {
+      return;
+    }
 
     try {
+      const trimmedText = text.trim();
+
+      console.log("send:", trimmedText);
+
       /*
-       * Save message through GraphQL
+       * Save message through GraphQL.
        */
-      console.log("send : "+ text.trim())
       const { data } = await sendMessage({
         variables: {
           chatId,
@@ -124,17 +170,46 @@ const ChatWindow = ({ chatId, currentUser }) => {
       });
 
       /*
-       * Get the newly-created message
+       * Get updated messages from GraphQL response.
        */
-      const messages =
-        data?.sendMessage?.messages || [];
-
-      const newMessage =
-        messages[messages.length - 1];
+      console.log(data.sendMessage)
+      const updatedMessages =
+        [data?.sendMessage] || [];
+        // console.log(updatedMessages)
 
       /*
-       * Tell Socket.IO that a new message
-       * was created.
+       * The last message is the newly-created message.
+       */
+      const newMessage =
+        updatedMessages[updatedMessages.length - 1];
+
+      // console.log(newMessage)
+      if (!newMessage) {
+        console.error(
+          "No message returned from sendMessage"
+        );
+        return;
+      }
+
+      /*
+       * Add message immediately to our own UI.
+       */
+      setMessages((currentMessages) => {
+        const alreadyExists = currentMessages.some(
+          (message) => String(message.id) === String(newMessage.id)
+        );
+        if (alreadyExists) {
+          return currentMessages;
+        }
+
+        return [
+          ...currentMessages,
+          newMessage,
+        ];
+      });
+
+      /*
+       * Notify other users through Socket.IO.
        */
       socket.emit("send_message", {
         chatId,
@@ -194,6 +269,7 @@ const ChatWindow = ({ chatId, currentUser }) => {
   if (error) {
     return (
       <div className="flex items-center justify-center h-full px-6 text-center">
+
         <div>
           <h2 className="font-semibold text-gray-900">
             Unable to load conversation
@@ -203,6 +279,7 @@ const ChatWindow = ({ chatId, currentUser }) => {
             {error.message}
           </p>
         </div>
+
       </div>
     );
   }
@@ -234,17 +311,21 @@ const ChatWindow = ({ chatId, currentUser }) => {
         </div>
 
         <div>
+
           <h2 className="font-semibold text-gray-900">
             {otherUser?.name || "Unknown User"}
           </h2>
 
           <div className="flex items-center gap-1.5">
+
             <span className="w-2 h-2 rounded-full bg-green-500" />
 
             <span className="text-xs text-gray-500">
               Online
             </span>
+
           </div>
+
         </div>
 
       </div>
@@ -252,7 +333,8 @@ const ChatWindow = ({ chatId, currentUser }) => {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-5">
 
-        {chat?.messages?.length === 0 ? (
+        {messages.length === 0 ? (
+
           <div className="flex items-center justify-center h-full">
 
             <div className="text-center">
@@ -273,22 +355,24 @@ const ChatWindow = ({ chatId, currentUser }) => {
             </div>
 
           </div>
+
         ) : (
+
           <div className="space-y-3">
 
-            {chat.messages.map((message) => (
+            {messages.map((message) => (
               <MessageBubble
-                key={message.id}
+                // key={message.id}
                 message={message}
                 currentUser={currentUser}
-                isOwn={message.sender.id===user.id}
-
+                isOwn={message.sender.id === user.id}
               />
             ))}
 
             <div ref={messagesEndRef} />
 
           </div>
+
         )}
 
       </div>
