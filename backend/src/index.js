@@ -26,33 +26,44 @@ app.get('/test',(req,res)=>{
   console.log(req.header)
 })
 
-io.on("connection",(socket)=>{
-  console.log("user connected : ", socket.id)
+io.on("connection", (socket) => {
 
-  // join chat room
+  console.log("User connected:", socket.id);
+
   socket.on("join_chat", (chatId) => {
-
     socket.join(chatId);
-
-    console.log(`Socket ${socket.id} joined room ${chatId}`);
   });
 
   socket.on("leave_chat", (chatId) => {
     socket.leave(chatId);
   });
 
-   // receive message from frontend
   socket.on("send_message", (data) => {
-      // console.log(data)
-      io.to(data.chatId).emit("receive_message", {
+    socket.to(data.chatId).emit("receive_message", {
       chatId: data.chatId,
       message: data.message,
     });
   });
-  socket.on("disconnect",()=>{
-    console.log("disconnected user : ",socket.id)
-  })
-})
+
+  socket.on("typing", (data) => {
+    socket.to(data.chatId).emit("user_typing", {
+      chatId: data.chatId,
+      userId: data.userId,
+    });
+  });
+
+  socket.on("stop_typing", (data) => {
+    socket.to(data.chatId).emit("user_stop_typing", {
+      chatId: data.chatId,
+      userId: data.userId,
+    });
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
+
+});
 
 const server = new ApolloServer({
   schema,
