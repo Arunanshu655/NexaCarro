@@ -1,19 +1,55 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Send } from "lucide-react";
 
-const MessageInput = ({ onSend, disabled = false }) => {
+const MessageInput = ({
+  onSend,
+  onTyping,
+  onStopTyping,
+  disabled = false,
+}) => {
   const [text, setText] = useState("");
+
+  const typingTimeoutRef = useRef(null);
+
+  const handleChange = (e) => {
+    const value = e.target.value;
+
+    setText(value);
+
+    if (!value.trim()) {
+      onStopTyping?.();
+      return;
+    }
+
+    onTyping?.();
+
+    /*
+     * Reset the timeout every time
+     * the user presses another key.
+     */
+    clearTimeout(typingTimeoutRef.current);
+
+    typingTimeoutRef.current = setTimeout(() => {
+      onStopTyping?.();
+    }, 1000);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
     const trimmedText = text.trim();
 
-    if (!trimmedText || disabled) return;
+    if (!trimmedText || disabled) {
+      return;
+    }
+
+    onStopTyping?.();
 
     onSend(trimmedText);
 
     setText("");
+
+    clearTimeout(typingTimeoutRef.current);
   };
 
   return (
@@ -24,7 +60,7 @@ const MessageInput = ({ onSend, disabled = false }) => {
       <input
         type="text"
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={handleChange}
         placeholder="Type a message..."
         disabled={disabled}
         className="
