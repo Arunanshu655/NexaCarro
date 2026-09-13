@@ -22,6 +22,7 @@ const ChatWindow = ({ chatId, currentUser }) => {
    * Socket.IO will update this state in realtime.
    */
   const [messages, setMessages] = useState([]);
+  const [isTyping, setIsTyping] = useState(false);
 
   const {
     data,
@@ -44,6 +45,7 @@ const ChatWindow = ({ chatId, currentUser }) => {
    * Whenever a different chat is selected,
    * load its messages into local state.
    */
+
   useEffect(() => {
     if (!chat) {
       setMessages([]);
@@ -52,7 +54,59 @@ const ChatWindow = ({ chatId, currentUser }) => {
 
     setMessages(chat.messages || []);
   }, [chat]);
+  //  User typing track
+  useEffect(() => {
+    if (!chatId) return;
 
+    const handleUserTyping = (data) => {
+      if (data.chatId !== chatId) {
+        return;
+      }
+
+      /*
+      * Don't show our own typing state.
+      */
+      if (data.userId === user?.id) {
+        return;
+      }
+
+      setIsTyping(true);
+    };
+
+    const handleUserStopTyping = (data) => {
+      if (data.chatId !== chatId) {
+        return;
+      }
+
+      if (data.userId === user?.id) {
+        return;
+      }
+
+      setIsTyping(false);
+    };
+
+    socket.on(
+      "user_typing",
+      handleUserTyping
+    );
+
+    socket.on(
+      "user_stop_typing",
+      handleUserStopTyping
+    );
+
+    return () => {
+      socket.off(
+        "user_typing",
+        handleUserTyping
+      );
+
+      socket.off(
+        "user_stop_typing",
+        handleUserStopTyping
+      );
+    };
+  }, [chatId, user?.id]);
   /*
    * Scroll to newest message
    */
