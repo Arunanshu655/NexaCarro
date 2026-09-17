@@ -223,6 +223,24 @@ const ChatWindow = ({ chatId, currentUser }) => {
         },
       });
 
+      const handleTyping = () => {
+        if (!chatId || !user?.id) return;
+
+        socket.emit("typing", {
+          chatId,
+          userId: user.id,
+        });
+      };
+
+      const handleStopTyping = () => {
+        if (!chatId || !user?.id) return;
+
+        socket.emit("stop_typing", {
+          chatId,
+          userId: user.id,
+        });
+      };
+
       /*
        * Get updated messages from GraphQL response.
        */
@@ -380,6 +398,24 @@ const ChatWindow = ({ chatId, currentUser }) => {
 
           </div>
 
+          <>
+          {isTyping && (
+            <div className="px-5 pb-2 bg-gray-50">
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <div className="flex gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce [animation-delay:150ms]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce [animation-delay:300ms]" />
+                </div>
+
+                <span>
+                  {otherUser?.name || "User"} is typing...
+                </span>
+              </div>
+            </div>
+          )}
+          </>
+
         </div>
 
       </div>
@@ -434,6 +470,8 @@ const ChatWindow = ({ chatId, currentUser }) => {
       {/* Input */}
       <MessageInput
         onSend={handleSendMessage}
+        onTyping={handleTyping}
+        onStopTyping={handleStopTyping}
         disabled={sending}
       />
 
