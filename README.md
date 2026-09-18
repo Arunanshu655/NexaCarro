@@ -159,6 +159,6 @@ http://localhost:4000/graphql
 ### ✅ Cart System 
 ### ✅ Order System
 ### ✅ Review System
-### 🟡 Styling
-### ⏹️ Chat System
+### ✅ Styling
+### 🟡 Chat System
 ### ⏹️ AI System
