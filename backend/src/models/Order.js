@@ -28,8 +28,29 @@ const orderSchema = new mongoose.Schema({
     type: String,
     enum: ["pending", "paid", "shipped", "delivered","cancelled"],
     default: "pending"
-  }
+  },
+      payment: {
+      status: {
+        type: String,
+        enum: [
+          "pending",
+          "paid",
+          "failed",
+          "refunded",
+        ],
+        default: "pending",
+      },
 
+      razorpayOrderId: {
+        type: String,
+        default: null,
+      },
+
+      razorpayPaymentId: {
+        type: String,
+        default: null,
+      },
+    },
 }, { timestamps: true });
 
 export default mongoose.model("Order", orderSchema);
