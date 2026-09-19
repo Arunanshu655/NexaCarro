@@ -42,12 +42,19 @@ export default gql`
   createdAt: String
   }
 
+  type Payment {
+    status: String
+    razorpayOrderId: String
+    razorpayPaymentId: String
+  }
+
   type Order {
     id: ID!
     user: User
     items: [OrderItem]
     totalPrice: Float
     status: String
+    payment: Payment
   }
       
   type Review{
@@ -62,6 +69,12 @@ export default gql`
       id: ID!
       users: [User]
       messages: [Message]
+  }
+  
+  type RazorpayOrderResponse {
+    id: String!
+    amount: Int!
+    currency: String!
   }
 
   type Query {
@@ -114,6 +127,18 @@ export default gql`
       chatId: ID!
       text: String!
     ): Message
+    
+    #12
+    type Mutation {
+  createRazorpayOrder(orderId: ID!): RazorpayOrderResponse
+
+  verifyRazorpayPayment(
+    orderId: ID!
+    razorpayOrderId: String!
+    razorpayPaymentId: String!
+    razorpaySignature: String!
+  ): Order
+}
     
     }
 `;
