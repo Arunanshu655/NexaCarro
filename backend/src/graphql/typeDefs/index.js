@@ -129,16 +129,15 @@ export default gql`
     ): Message
     
     #12
-    type Mutation {
   createRazorpayOrder(orderId: ID!): RazorpayOrderResponse
 
-  verifyRazorpayPayment(
-    orderId: ID!
-    razorpayOrderId: String!
-    razorpayPaymentId: String!
-    razorpaySignature: String!
-  ): Order
-}
+      verifyRazorpayPayment(
+        orderId: ID!
+        razorpayOrderId: String!
+        razorpayPaymentId: String!
+        razorpaySignature: String!
+      ): Order
+    
     
     }
 `;
