@@ -1,14 +1,18 @@
 // resolvers/index.js
+//module imports
 import mongoose from "mongoose";
+import bcrypt from "bcrypt";
+import crypto from "crypto";
+import jwt from "jsonwebtoken";
+//model imports
 import User from "../../models/User.js";
 import Product from "../../models/Product.js";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import Cart from "../../models/Cart.js";
 import Order from "../../models/Order.js";
 import Review from "../../models/Review.js";
 import Chat from "../../models/Chat.js";
 import Message from "../../models/Message.js";
+import razorpay from "../../config/razorpay.js";
 
 export default {
   Query: {
@@ -362,7 +366,98 @@ export default {
       await chat.save();
 
       return await message.populate("sender", "name");
-    }
+    },
+    //12
+    createRazorpayOrder: async (_, { orderId }, { user }) => {
+      if (!user) {
+        throw new Error("Unauthorized");
+      }
+
+      /*
+      * Find the NexaCart order.
+      */
+      const order = await Order.findById(orderId);
+
+      if (!order) {
+        throw new Error("Order not found");
+      }
+
+      /*
+      * Make sure this order belongs to
+      * the currently authenticated user.
+      */
+      if (order.user.toString() !== user.id) {
+        throw new Error("This is not your order");
+      }
+
+      /*
+      * Don't create another Razorpay order
+      * if one already exists.
+      */
+      if (order.payment?.razorpayOrderId) {
+        return {
+          id: order.payment.razorpayOrderId,
+          amount: Math.round(order.totalPrice * 100),
+          currency: "INR",
+        };
+      }
+
+      /*
+      * Don't allow payment for an already
+      * cancelled order.
+      */
+      if (order.status === "cancelled") {
+        throw new Error("Cannot pay for a cancelled order");
+      }
+
+      /*
+      * Razorpay expects amount in the smallest
+      * currency unit.
+      *
+      * ₹500 -> 50000 paise
+      */
+      const amount = Math.round(order.totalPrice * 100);
+
+      if (amount <= 0) {
+        throw new Error("Invalid order amount");
+      }
+
+      /*
+      * Create Razorpay order.
+      */
+      const razorpayOrder = await razorpay.orders.create({
+        amount,
+        currency: "INR",
+
+        /*
+        * Receipt can be your MongoDB order ID.
+        */
+        receipt: order._id.toString(),
+
+        notes: {
+          nexacartOrderId: order._id.toString(),
+          userId: user.id,
+        },
+      });
+
+      /*
+      * Save Razorpay order ID in MongoDB.
+      */
+      order.payment = {
+        status: "pending",
+        razorpayOrderId: razorpayOrder.id,
+        razorpayPaymentId: null,
+      };
+
+      await order.save();
+
+      return {
+        id: razorpayOrder.id,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+      };
+    },
+
   },
   Chat: {
     messages: async (parent) => {

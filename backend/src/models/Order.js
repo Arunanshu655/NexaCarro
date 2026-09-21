@@ -29,7 +29,7 @@ const orderSchema = new mongoose.Schema({
     enum: ["pending", "paid", "shipped", "delivered","cancelled"],
     default: "pending"
   },
-      payment: {
+  payment: {
       status: {
         type: String,
         enum: [
@@ -50,7 +50,7 @@ const orderSchema = new mongoose.Schema({
         type: String,
         default: null,
       },
-    },
+  },
 }, { timestamps: true });
 
 export default mongoose.model("Order", orderSchema);

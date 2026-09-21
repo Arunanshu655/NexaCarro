@@ -129,15 +129,14 @@ export default gql`
     ): Message
     
     #12
-  createRazorpayOrder(orderId: ID!): RazorpayOrderResponse
-
-      verifyRazorpayPayment(
-        orderId: ID!
-        razorpayOrderId: String!
-        razorpayPaymentId: String!
-        razorpaySignature: String!
-      ): Order
-    
+    createRazorpayOrder(orderId: ID!): RazorpayOrderResponse
+    #13
+    verifyRazorpayPayment(
+      orderId: ID!
+      razorpayOrderId: String!
+      razorpayPaymentId: String!
+      razorpaySignature: String!
+    ): Order
     
     }
 `;
