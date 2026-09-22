@@ -374,7 +374,7 @@ export default {
       }
 
       /*
-      * Find the NexaCart order.
+      * Find the NexaCarro order.
       */
       const order = await Order.findById(orderId);
 
@@ -456,6 +456,106 @@ export default {
         amount: razorpayOrder.amount,
         currency: razorpayOrder.currency,
       };
+    },
+    //13
+    verifyRazorpayPayment: async (
+      _,
+      {
+        orderId,
+        razorpayOrderId,
+        razorpayPaymentId,
+        razorpaySignature,
+      },
+      { user }
+    ) => {
+      if (!user) {
+        throw new Error("Unauthorized");
+      }
+
+      /*
+      * Find NexaCarro order.
+      */
+      const order = await Order.findById(orderId);
+
+      if (!order) {
+        throw new Error("Order not found");
+      }
+
+      /*
+      * Make sure this order belongs
+      * to the authenticated user.
+      */
+      if (order.user.toString() !== user.id) {
+        throw new Error("This is not your order");
+      }
+
+      /*
+      * Make sure the Razorpay order ID
+      * belongs to this NexaCarro order.
+      */
+      if (
+        order.payment?.razorpayOrderId !==
+        razorpayOrderId
+      ) {
+        throw new Error(
+          "Razorpay order does not match"
+        );
+      }
+
+      /*
+      * Generate expected signature.
+      *
+      * Razorpay signature:
+      *
+      * HMAC_SHA256(
+      *   razorpayOrderId + "|" + razorpayPaymentId,
+      *   razorpaySecret
+      * )
+      */
+      const generatedSignature = crypto
+        .createHmac(
+          "sha256",
+          process.env.RAZORPAY_KEY_SECRET
+        )
+        .update(
+          `${razorpayOrderId}|${razorpayPaymentId}`
+        )
+        .digest("hex");
+
+      /*
+      * Timing-safe comparison.
+      */
+      const isValid = crypto.timingSafeEqual(
+        Buffer.from(generatedSignature),
+        Buffer.from(razorpaySignature)
+      );
+
+      if (!isValid) {
+        throw new Error("Invalid payment signature");
+      }
+
+      /*
+      * Payment is verified.
+      */
+      order.payment.status = "paid";
+      order.payment.razorpayPaymentId =
+        razorpayPaymentId;
+
+      /*
+      * Your existing order status.
+      *
+      * You can later introduce a separate
+      * fulfillment status if required.
+      */
+      order.status = "confirmed";
+
+      await order.save();
+
+      return await order
+        .populate("user")
+        .then((result) =>
+          result.populate("items.product")
+        );
     },
 
   },
