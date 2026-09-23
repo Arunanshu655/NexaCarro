@@ -547,7 +547,7 @@ export default {
       * You can later introduce a separate
       * fulfillment status if required.
       */
-      order.status = "confirmed";
+      order.status = "paid";
 
       await order.save();
 
