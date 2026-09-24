@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 
 import OrderItem from "./OrderItem";
+import PaymentButton from '../payment/PaymentButton';
+
 
 import { CANCEL_ORDER } from "../../graphql/mutations/orderMutations";
 import { GET_ORDERS } from "../../graphql/queries/orderQueries";
@@ -62,6 +64,14 @@ const OrderCard = ({ order }) => {
           className:
             "bg-red-50 text-[var(--danger)]",
           icon: XCircle,
+        };
+      
+      case "paid":
+        return {
+          label: "paid",
+          className:
+            "bg-blue-50 text-[var(--success)]",
+          icon: CircleCheck,
         };
 
       case "shipped":
@@ -189,55 +199,74 @@ const OrderCard = ({ order }) => {
 
         </div>
 
-        <div className="flex items-center justify-between gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
 
-          <div className="text-right">
+            {/* Total */}
+            <div className="text-right">
+              <p className="text-xs text-[var(--muted)]">
+                Total
+              </p>
 
-            <p className="text-xs text-[var(--muted)]">
-              Total
-            </p>
+              <p className="text-xl font-semibold">
+                ₹{order.totalPrice?.toFixed(2)}
+              </p>
+            </div>
 
-            <p className="text-xl font-semibold">
-              ₹{order.totalPrice?.toFixed(2)}
-            </p>
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-2">
+
+              {/* Pay Now */}
+              {order.status?.toLowerCase() === "pending" &&
+                order.payment?.status !== "paid" && (
+                  <PaymentButton
+                    orderId={order.id}
+                    user={order.user}
+                    onSuccess={(paidOrder) => {
+                      console.log(
+                        "Payment successful:",
+                        paidOrder
+                      );
+                    }}
+                  />
+                )}
+
+              {/* Cancel Order */}
+              {order.status?.toLowerCase() !== "delivered" &&
+                order.status?.toLowerCase() !== "cancelled" && (
+                  <button
+                    onClick={handleCancel}
+                    disabled={loading}
+                    className="
+                      inline-flex
+                      items-center
+                      justify-center
+                      gap-2
+                      rounded-full
+                      border
+                      border-red-200
+                      px-4
+                      py-2
+                      text-sm
+                      font-medium
+                      text-[var(--danger)]
+                      transition-all
+                      duration-200
+                      hover:bg-red-50
+                      disabled:cursor-not-allowed
+                      disabled:opacity-50
+                    "
+                  >
+                    <XCircle size={16} />
+
+                    {loading
+                      ? "Cancelling..."
+                      : "Cancel Order"}
+                  </button>
+                )}
+
+            </div>
 
           </div>
-
-          {order.status?.toLowerCase() !== "delivered" &&
-            order.status?.toLowerCase() !== "cancelled" && (
-
-              <button
-                onClick={handleCancel}
-                disabled={loading}
-                className="
-                  inline-flex
-                  items-center
-                  gap-2
-                  rounded-full
-                  border border-red-200
-                  px-4 py-2
-                  text-sm
-                  font-medium
-                  text-[var(--danger)]
-                  transition-all duration-200
-                  hover:bg-red-50
-                  disabled:cursor-not-allowed
-                  disabled:opacity-50
-                "
-              >
-
-                <XCircle size={16} />
-
-                {loading
-                  ? "Cancelling..."
-                  : "Cancel Order"
-                }
-
-              </button>
-
-            )}
-
-        </div>
 
       </div>
 
