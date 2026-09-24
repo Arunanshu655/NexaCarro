@@ -11,6 +11,12 @@ query{
 
         status
 
+        payment {
+            status
+            razorpayOrderId
+            razorpayPaymentId
+        }
+            
         user{
             id
             name
