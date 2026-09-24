@@ -116,6 +116,24 @@ const ChatWindow = ({ chatId, currentUser }) => {
     });
   };
 
+  const handleTyping = () => {
+    if (!chatId || !user?.id) return;
+
+    socket.emit("typing", {
+      chatId,
+      userId: user.id,
+    });
+  };
+
+  const handleStopTyping = () => {
+    if (!chatId || !user?.id) return;
+
+    socket.emit("stop_typing", {
+      chatId,
+      userId: user.id,
+    });
+  };
+
   /*
    * Join / leave Socket.IO room
    */
@@ -222,24 +240,6 @@ const ChatWindow = ({ chatId, currentUser }) => {
           text: text.trim(),
         },
       });
-
-      const handleTyping = () => {
-        if (!chatId || !user?.id) return;
-
-        socket.emit("typing", {
-          chatId,
-          userId: user.id,
-        });
-      };
-
-      const handleStopTyping = () => {
-        if (!chatId || !user?.id) return;
-
-        socket.emit("stop_typing", {
-          chatId,
-          userId: user.id,
-        });
-      };
 
       /*
        * Get updated messages from GraphQL response.
