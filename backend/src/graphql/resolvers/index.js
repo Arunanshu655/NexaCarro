@@ -112,7 +112,15 @@ export default {
 
       if (!valid) throw new Error("Password mismatch with user");
 
-      const res = await jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+      const res = jwt.sign( 
+        {
+          id: user._id,
+          role: user.role,
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "7d",
+        });
       return res;
     },
     //3
