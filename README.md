@@ -161,5 +161,7 @@ http://localhost:4000/graphql
 ### ✅ Order System
 ### ✅ Review System
 ### ✅ Styling
-### 🟡 Chat System
+### ✅ Chat System
+### ✅ Payment System
+### 🟡 Admin management System
 ### ⏹️ AI System
