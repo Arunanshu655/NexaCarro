@@ -18,6 +18,7 @@ The project includes authentication, product management, cart and order handling
 - GraphQL API using Apollo Server
 - MongoDB Database with Mongoose
 - Realtime Buyer-Seller Chat using Socket.IO
+- Realtime Payment with Razorpay gateway
 
 ---
 
