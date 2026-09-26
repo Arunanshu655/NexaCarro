@@ -19,7 +19,7 @@ export default {
     //1
     test: () => "Hello, GraphQL!",
     //2
-    products: async () => await Product.find(),
+    products: () => Product.find().lean().exec(),
     //3
     product: async (_, { id }) =>{
       try {
