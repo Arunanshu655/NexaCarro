@@ -48,8 +48,10 @@ export default {
     orders: async (_, __, { user }) => {
       if(!user) throw new Error("Unauthorized");
       
-      return await Order.find({ user: user.id })
-        .populate("items.product").populate("user");
+      return Order.find({ user: user.id })
+        .populate("items.product").populate("user")
+        .lean()
+        .exec();
     },
     //6
     reviews: async (_, { productId }) => {
