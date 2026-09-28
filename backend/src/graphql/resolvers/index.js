@@ -13,6 +13,7 @@ import Review from "../../models/Review.js";
 import Chat from "../../models/Chat.js";
 import Message from "../../models/Message.js";
 import razorpay from "../../config/razorpay.js";
+import { requireAdmin } from "../../utils/authorization.js";
 
 export default {
   Query: {
@@ -40,6 +41,7 @@ export default {
 
         const userCart =  await Cart.findOne({ user: user.id })
         .populate("items.product").populate("user");
+        console.log(userCart)
       
       // if(!userCart.data.cart) return {"message":"No items in your Cart"}
       return userCart;
@@ -90,12 +92,80 @@ export default {
 
       return chat;
     },
+    //9
     me: async (_, __, { user }) => {
       if (!user) throw new Error("Unauthorized");
 
       return await User.findById(user.id);
     },
+    //10
+    adminTest: async(_,__, {user})=>{
+      await requireAdmin(user)
+      return "admin authorization successful"
+    },
+    //11
+    adminStats: async (_, __, { user }) => {
+      await requireAdmin(user);
+
+      const [
+        totalUsers,
+        totalProducts,
+        totalOrders,
+        revenueResult,
+        pendingOrders,
+        confirmedOrders,
+        shippedOrders,
+        deliveredOrders,
+        cancelledOrders,
+      ] = await Promise.all([
+        User.countDocuments(),
+
+        Product.countDocuments(),
+
+        Order.countDocuments(),
+
+        Order.aggregate([
+          {
+            $match: {
+              "payment.status": "paid",
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              total: {
+                $sum: "$totalPrice",
+              },
+            },
+          },
+        ]), // revenue
+
+        Order.countDocuments({ status: "pending" }),
+
+        Order.countDocuments({ status: "paid" }),
+
+        Order.countDocuments({ status: "shipped" }),
+
+        Order.countDocuments({ status: "delivered" }),
+
+        Order.countDocuments({ status: "cancelled" }),
+      ]);
+
+      return {
+        totalUsers,
+        totalProducts,
+        totalOrders,
+        totalRevenue: revenueResult[0]?.total || 0,
+
+        pendingOrders,
+        confirmedOrders,
+        shippedOrders,
+        deliveredOrders,
+        cancelledOrders,
+      };
+    },
   },
+
 
   Mutation: {
     //1
@@ -577,6 +647,7 @@ export default {
     }
   },
   Product: {
+      id: (parent) => parent.id ?? parent._id?.toString(),
       reviews: async (parent) => {
 
       return await Review.find({
