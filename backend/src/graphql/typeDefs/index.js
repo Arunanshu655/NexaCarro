@@ -76,6 +76,18 @@ export default gql`
     amount: Int!
     currency: String!
   }
+  
+  type AdminStats {
+    totalUsers: Int!
+    totalProducts: Int!
+    totalOrders: Int!
+    totalRevenue: Float!
+    pendingOrders: Int!
+    confirmedOrders: Int!
+    shippedOrders: Int!
+    deliveredOrders: Int!
+    cancelledOrders: Int!
+  }
 
   type Query {
     test: String  # 1
@@ -87,6 +99,8 @@ export default gql`
     myChats: [Chat]  #7
     chat(chatId: ID!): Chat  #8
     me: User  #9
+    adminTest : String #10
+    adminStats: AdminStats #11
   }
 
 
