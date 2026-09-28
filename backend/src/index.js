@@ -70,12 +70,12 @@ const server = new ApolloServer({
   context: ({ req }) => {
     const raw = req.headers.authorization || "";
     const token = raw.split(" ").length > 1 ? raw.split(" ")[1] : raw
-    console.log("Received token:", token);
+    // console.log("Received token:", token);
     
     try{
       
       const user = jwt.verify(token, process.env.JWT_SECRET);
-      console.log("from User:", user);
+      // console.log("from User:", user);
       return { user };
 
     }catch(err){
