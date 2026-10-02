@@ -101,6 +101,7 @@ export default gql`
     me: User  #9
     adminTest : String #10
     adminStats: AdminStats #11
+    adminOrders: [Order]
   }
 
 

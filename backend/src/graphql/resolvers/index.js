@@ -49,11 +49,14 @@ export default {
     //5
     orders: async (_, __, { user }) => {
       if(!user) throw new Error("Unauthorized");
-      
-      return Order.find({ user: user.id })
+      // console.log("order of user : "+ user.id)
+      const fOrders = await Order.find({ user: user.id })
         .populate("items.product").populate("user")
         .lean()
         .exec();
+
+      // console.log("Orders : ", fOrders)
+      return fOrders
     },
     //6
     reviews: async (_, { productId }) => {
@@ -163,6 +166,15 @@ export default {
         deliveredOrders,
         cancelledOrders,
       };
+    },
+    //12
+    adminOrders: async (_, __, { user }) => {
+      await requireAdmin(user);
+
+      return await Order.find()
+        .sort({ createdAt: -1 })
+        .populate("user")
+        .populate("items.product");
     },
   },
 
@@ -638,6 +650,12 @@ export default {
         );
     },
 
+  },
+  Order: {
+    id: (parent) => parent.id ?? parent._id?.toString(),
+  },
+  User: {
+    id: (parent) => parent.id ?? parent._id?.toString(),
   },
   Chat: {
     messages: async (parent) => {
