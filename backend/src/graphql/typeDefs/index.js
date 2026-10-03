@@ -152,6 +152,11 @@ export default gql`
       razorpayPaymentId: String!
       razorpaySignature: String!
     ): Order
+    #14
+    updateOrderStatus(
+      orderId: ID!
+      status: String!
+    ): Order
     
     }
 `;
