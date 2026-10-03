@@ -14,6 +14,7 @@ import Chat from "../../models/Chat.js";
 import Message from "../../models/Message.js";
 import razorpay from "../../config/razorpay.js";
 import { requireAdmin } from "../../utils/authorization.js";
+import { ORDER_STATUS, VALID_TRANSITIONS } from "../../utils/OrderStatus.js";
 
 export default {
   Query: {
@@ -648,6 +649,63 @@ export default {
         .then((result) =>
           result.populate("items.product")
         );
+    },
+    //14
+    updateOrderStatus: async (_, { orderId, status }, { user }) => {
+      await requireAdmin(user);
+
+        const newStatus = status.toLowerCase();
+
+        const allowedStatuses = [
+          "pending",
+          "confirmed",
+          "shipped",
+          "delivered",
+          "cancelled",
+        ];
+
+        if (!allowedStatuses.includes(newStatus)) {
+          throw new Error("Invalid order status");
+        }
+
+        const order = await Order.findById(orderId);
+
+        if (!order) {
+          throw new Error("Order not found");
+        }
+
+        const currentStatus = order.status.toLowerCase();
+
+        if (currentStatus === newStatus) {
+          return await order
+            .populate("user")
+            .then((result) => result.populate("items.product"));
+        }
+
+        const allowedTransitions = VALID_TRANSITIONS[currentStatus] || [];
+
+        if (!allowedTransitions.includes(newStatus)) {
+          throw new Error(
+            `Cannot change order status from ${currentStatus} to ${newStatus}`
+          );
+        }
+
+        if (
+          ["shipped", "delivered"].includes(newStatus) &&
+          order.payment?.status !== "paid"
+        ) {
+          throw new Error(
+            "Order must be paid before it can be shipped or delivered"
+          );
+        }
+
+        order.status = newStatus;
+
+        await order.save();
+
+        return await order
+          .populate("user")
+          .then((result) => result.populate("items.product"));
     },
 
   },
