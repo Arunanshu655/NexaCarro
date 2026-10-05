@@ -12,6 +12,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Chat from './pages/Chat'
 
+import AdminOrders from "./pages/admin/AdminOrders";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
@@ -63,13 +65,22 @@ const App = () => {
           }
         />
         <Route
-  path="/chat"
-  element={
-    <ProtectedRoute>
-      <Chat />
-    </ProtectedRoute>
-  }
-/>
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <Chat />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/orders"
+          element={
+            <ProtectedRoute>
+              <AdminOrders />
+            </ProtectedRoute>
+          }
+        />
 
       </Routes>
 
