@@ -49,9 +49,9 @@ const AdminOrders = () => {
           className: "bg-orange-50 text-[var(--warning)]",
         };
 
-      case "confirmed":
+      case "paid":
         return {
-          label: "Confirmed",
+          label: "paid",
           icon: CheckCircle2,
           className: "bg-blue-50 text-[var(--primary)]",
         };
@@ -89,9 +89,9 @@ const AdminOrders = () => {
   const getAvailableStatuses = (status) => {
     switch (status?.toLowerCase()) {
       case "pending":
-        return ["confirmed", "cancelled"];
+        return ["paid", "cancelled"];
 
-      case "confirmed":
+      case "paid":
         return ["shipped", "cancelled"];
 
       case "shipped":
