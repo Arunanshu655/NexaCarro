@@ -75,8 +75,8 @@ backend/
 ### Clone Repository
 
 ```bash
-git clone <repository-url>
-cd project-folder
+git clone https://github.com/<your-github-repo>/NexaCarro.git)
+cd nexacarro
 ```
 
 ### Install Dependencies
