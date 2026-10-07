@@ -20,6 +20,10 @@ const AdminOrders = () => {
     refetch,
   } = useQuery(GET_ADMIN_ORDERS);
 
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [paymentFilter, setPaymentFilter] = useState("all");
+
   const [updateOrderStatus, { loading: updating }] =
     useMutation(UPDATE_ORDER_STATUS);
 
