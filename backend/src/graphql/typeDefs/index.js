@@ -104,7 +104,8 @@ export default gql`
     me: User  #9
     adminTest : String #10
     adminStats: AdminStats #11
-    adminOrders: [Order]
+    adminOrders: [Order] #12
+    adminProducts: [Product] #13
   }
 
 
@@ -160,6 +161,7 @@ export default gql`
       orderId: ID!
       status: String!
     ): Order
+
     
     }
 `;
