@@ -15,6 +15,9 @@ export default gql`
     name: String
     price: Float
     description: String
+    image: String
+    category: String
+    stock: Int
     reviews: [Review]
   }
 
