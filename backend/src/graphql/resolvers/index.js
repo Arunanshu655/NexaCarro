@@ -15,7 +15,7 @@ import Message from "../../models/Message.js";
 import razorpay from "../../config/razorpay.js";
 import { requireAdmin } from "../../utils/authorization.js";
 import { ORDER_STATUS, VALID_TRANSITIONS } from "../../utils/OrderStatus.js";
-
+import { requireAdmin } from "../../utils/authorization.js";
 export default {
   Query: {
     //1
@@ -707,6 +707,13 @@ export default {
           .populate("user")
           .then((result) => result.populate("items.product"));
     },
+    adminProducts: async (_, __, { user }) => {
+      await requireAdmin(user);
+
+      return await Product.find().sort({ _id: -1 });
+    },
+
+
 
   },
   Order: {
