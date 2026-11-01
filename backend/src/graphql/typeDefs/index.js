@@ -161,7 +161,27 @@ export default gql`
       orderId: ID!
       status: String!
     ): Order
+    #15
+    createProduct(
+    name: String!
+    description: String!
+    price: Float!
+    image: String
+    category: String
+    stock: Int!
+  ): Product
 
+  updateProduct(
+    productId: ID!
+    name: String
+    description: String
+    price: Float
+    image: String
+    category: String
+    stock: Int
+  ): Product
+
+  deleteProduct(productId: ID!): Boolean
     
     }
 `;
