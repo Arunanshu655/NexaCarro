@@ -171,7 +171,7 @@ export default gql`
     category: String
     stock: Int!
   ): Product
-
+  #16
   updateProduct(
     productId: ID!
     name: String
@@ -181,6 +181,25 @@ export default gql`
     category: String
     stock: Int
   ): Product
+  #17
+  createProduct(
+    name: String!
+    description: String!
+    price: Float!
+    stock: Int!
+    category: String!
+  ): Product
+  #18
+  updateProduct(
+    productId: ID!
+    name: String
+    description: String
+    price: Float
+    stock: Int
+    category: String
+  ): Product
+  #19
+  deleteProduct(productId: ID!): Boolean
 
   deleteProduct(productId: ID!): Boolean
     
