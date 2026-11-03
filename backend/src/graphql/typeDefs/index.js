@@ -13,11 +13,12 @@ export default gql`
   type Product {
     id: ID!
     name: String
-    price: Float
     description: String
-    image: String
-    category: String
+    price: Float
     stock: Int
+    seller: User
+    category: String
+    rating: Float
     reviews: [Review]
   }
 
