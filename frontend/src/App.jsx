@@ -13,6 +13,8 @@ import Register from "./pages/Register";
 import Chat from './pages/Chat'
 
 import AdminOrders from "./pages/admin/AdminOrders";
+import AdminProducts from "./pages/admin/AdminProducts";
+import AdminRoute from "./components/auth/AdminRoute";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -74,11 +76,20 @@ const App = () => {
         />
 
         <Route
+          path="/admin/products"
+          element={
+            <AdminRoute>
+              <AdminProducts />
+            </AdminRoute>
+          }
+        />
+
+        <Route
           path="/admin/orders"
           element={
-            <ProtectedRoute>
+            <AdminRoute>
               <AdminOrders />
-            </ProtectedRoute>
+            </AdminRoute>
           }
         />
 
