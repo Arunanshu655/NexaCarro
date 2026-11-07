@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import { useLazyQuery, useQuery } from "@apollo/client/react";
-import {GET_ME} from "../graphql/queries/userQueries"
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useQuery } from "@apollo/client/react";
+import { GET_ME } from "../graphql/queries/userQueries";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -8,10 +8,6 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(
     localStorage.getItem("token")
   );
-  
-  const [user, setUser] = useState(null);
-
-  
   
   const login = (jwt) => {
     
@@ -23,14 +19,13 @@ export const AuthProvider = ({ children }) => {
     
   };
   
-  const logout = () => {
+  const logout = useCallback(() => {
     // console.log("log out")
     localStorage.removeItem("token");
     
     setToken(null);
-    setUser(null);
     
-  };
+  }, []);
 
   const { data, loading, error } = useQuery(GET_ME, {
     skip: !token,              // don’t run if no token
@@ -38,13 +33,13 @@ export const AuthProvider = ({ children }) => {
   });
 
 useEffect(() => {
-  if (data?.me) {
-    setUser(data.me);
-  }
   if (error) {
     logout();
   }
-}, [data, error]);
+}, [error, logout]);
+
+  const user = token ? data?.me ?? null : null;
+  const authLoading = Boolean(token) && (loading || (!data && !error));
   
   return (
 
@@ -56,7 +51,7 @@ useEffect(() => {
         // fetchMe,
         isAuthenticated: (token ? true : false),
         user,
-        setUser
+        loading: authLoading
       }}
     >
 
